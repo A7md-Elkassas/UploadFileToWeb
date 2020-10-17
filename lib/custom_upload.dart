@@ -16,10 +16,9 @@ class _FileUploadAppState extends State<CustomFileUpload> {
   Uint8List _bytesData;
   InputElement input;
   Response response;
-  String progressMsg;
-  double actualPercentage = 0;
-  bool uploading = false;
-
+  double actualPercentage;
+  double percentage = 0;
+  String uploadMsg = '';
   pickFile() async {
     input = FileUploadInputElement();
     input.multiple = true;
@@ -46,9 +45,6 @@ class _FileUploadAppState extends State<CustomFileUpload> {
   }
 
   uploadFile(BuildContext ctx) async {
-    setState(() {
-      uploading = !uploading;
-    });
     FormData formData = FormData.fromMap({
       "file": MultipartFile.fromBytes(
         _pickedFile,
@@ -60,37 +56,18 @@ class _FileUploadAppState extends State<CustomFileUpload> {
         data: formData, onReceiveProgress: (sent, total) {
       double percentage = ((sent / total) * 100).floorToDouble();
       actualPercentage = (percentage / 100);
-      print(percentage);
-      setState(() {
-        progressMsg = percentage.toString();
-      });
+      if (percentage < 100) {
+        setState(() {
+          uploadMsg = 'uploading ${percentage.toString()}%';
+          print('uploading ${percentage.toString()}%');
+        });
+      } else {
+        setState(() {
+          uploadMsg = 'Uploaded Successfully';
+          print('Uploaded Successfully');
+        });
+      }
     });
-    if (response.statusCode == 200) {
-      print('success');
-    } else {
-      print(response);
-    }
-    /*showDialog(
-        barrierDismissible: false,
-        context: ctx,
-        child: AlertDialog(
-          title: Text("Success Message"),
-          content: SizedBox(
-            width: 150,
-            child: Text(
-              "successfully uploaded",
-              textAlign: TextAlign.left,
-            ),
-          ),
-          actions: <Widget>[
-            FlatButton(
-              child: Text('Ok'),
-              onPressed: () {
-                Navigator.pop(ctx);
-              },
-            ),
-          ],
-        )); */
   }
 
   @override
@@ -108,7 +85,7 @@ class _FileUploadAppState extends State<CustomFileUpload> {
               children: <Widget>[
                 Container(
                   margin: EdgeInsets.all(10),
-                  child: progressMsg == null
+                  child: actualPercentage == null
                       ? Text("")
                       : Container(
                           width: 250,
@@ -116,12 +93,14 @@ class _FileUploadAppState extends State<CustomFileUpload> {
                           child: Column(
                             children: [
                               LinearProgressIndicator(
+                                minHeight: 8,
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.red),
                                 value: actualPercentage,
                               ),
+                              const SizedBox(height: 5),
                               Text(
-                                progressMsg == null
-                                    ? ''
-                                    : " $progressMsg% Uploaded",
+                                uploadMsg ?? '',
                                 style: TextStyle(
                                     fontSize: 18.0,
                                     color: Colors.black,
